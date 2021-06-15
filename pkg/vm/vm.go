@@ -183,6 +183,16 @@ func (vm *VM) emulateCycle() {
 		break
 	case 0xA000: // 0xANNN sets I to the address NNN
 		vm._0xANNN()
+		break
+	case 0xB000: // 0xBNNN jumps to the address NNN plus V0
+		vm._0xBNNN()
+		break
+	case 0xC000: // 0xCXNN sets VX to a random number and NN
+		vm._0xCXNN()
+		break
+	case 0xD000: // 0xDXYN: Draws a sprite at coordinate (VX, VY) that has a width of 8 pixels and a height of N pixels
+		vm._0xDXYN()
+		break 
 	}
 }
 

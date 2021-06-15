@@ -1,5 +1,7 @@
 package vm
 
+import "math/rand"
+
 // _0xOOE0 clears the display
 // TODO: Update
 func (vm *VM) _0x00E0() {
@@ -104,7 +106,7 @@ func (vm *VM) _0x7XNN() {
 	vm.pc += 2
 }
 
-// 0x8XY0 sets vx to the value of vy
+// _0x8XY0 sets vx to the value of vy
 func (vm *VM) _0x8XY0() {
 
 	// decode x and y
@@ -118,7 +120,7 @@ func (vm *VM) _0x8XY0() {
 	vm.pc += 2
 }
 
-// 0x8XY1 sets vx to the value of "vx or vy"
+// _0x8XY1 sets vx to the value of "vx or vy"
 func (vm *VM) _0x8XY1() {
 
 	// decode x and y
@@ -132,7 +134,7 @@ func (vm *VM) _0x8XY1() {
 	vm.pc += 2
 }
 
-// 0x8XY2 sets vx to the value of "vx and vy"
+// _0x8XY2 sets vx to the value of "vx and vy"
 func (vm *VM) _0x8XY2() {
 
 	// decode x and y
@@ -146,7 +148,7 @@ func (vm *VM) _0x8XY2() {
 	vm.pc += 2
 }
 
-// 0x8XY3 sets vx to the value of "vx xor vy"
+// _0x8XY3 sets vx to the value of "vx xor vy"
 func (vm *VM) _0x8XY3() {
 
 	// decode x and y
@@ -160,7 +162,7 @@ func (vm *VM) _0x8XY3() {
 	vm.pc += 2
 }
 
-// 0x8XY4 adds vy to vx. vf is set to 1 when there's a carry
+// _0x8XY4 adds vy to vx. vf is set to 1 when there's a carry
 func (vm *VM) _0x8XY4() {
 
 	// decode x and y
@@ -181,7 +183,7 @@ func (vm *VM) _0x8XY4() {
 	vm.pc += 2
 }
 
-// 0x8XY5 vy is subtracted from vx. vf is set to 0 when there's a borrow
+// _0x8XY5 vy is subtracted from vx. vf is set to 0 when there's a borrow
 func (vm *VM) _0x8XY5() {
 
 	// decode x and y
@@ -201,7 +203,7 @@ func (vm *VM) _0x8XY5() {
 	vm.pc += 2
 }
 
-// 0x8XY6 shifts vx right by one.
+// _0x8XY6 shifts vx right by one.
 // vf is set to the value of the least significant bit of vx before the shift
 func (vm *VM) _0x8XY6() {
 
@@ -218,7 +220,7 @@ func (vm *VM) _0x8XY6() {
 	vm.pc += 2
 }
 
-// 0x8XY7 sets vx to vy - vx.
+// _0x8XY7 sets vx to vy - vx.
 // vf is set to 0 when there is a borrow
 func (vm *VM) _0x8XY7() {
 
@@ -240,7 +242,7 @@ func (vm *VM) _0x8XY7() {
 	vm.pc += 2
 }
 
-// 0x8XYE shifts VX left by one.
+// _0x8XYE shifts VX left by one.
 // vf is set to the value of the most significant bit of vx before the shift
 func (vm *VM) _0x8XYE() {
 
@@ -257,7 +259,7 @@ func (vm *VM) _0x8XYE() {
 	vm.pc += 2
 }
 
-// 0x9XY0 skips the next instruction if VX doesn't equal VY
+// _0x9XY0 skips the next instruction if VX doesn't equal VY
 func (vm *VM) _0x9XY0() {
 
 	// decode x and y
@@ -274,7 +276,7 @@ func (vm *VM) _0x9XY0() {
 	vm.pc += 2
 }
 
-// 0xANNN sets I to the address NNN
+// _0xANNN sets I to the address NNN
 func (vm *VM) _0xANNN() {
 
 	// update index register
@@ -282,4 +284,33 @@ func (vm *VM) _0xANNN() {
 
 	// continue to next instruction
 	vm.pc += 2
+}
+
+// _0xBNNN sets I to the address NNN
+func (vm *VM) _0xBNNN() {
+
+	// update the program counter
+	vm.pc = (vm.opcode & 0x0FFF) + vm.v[0]
+}
+
+// _0xCXNN sets VX to a random number and NN
+func (vm *VM) _0xCXNN() {
+
+	// decode x
+	x := (vm.opcode & 0x0F00) >> 8
+
+	// update vx
+	vm.v[x] = rand.Intn(0xFF) & (vm.opcode & 0x00FF)
+
+	// continue to next instruction
+	vm.pc += 2
+}
+
+// _0xDXYN draws a sprite at coordinate (VX, VY) that has a width of 8 pixels and a height of N pixels.
+// Each row of 8 pixels is read as bit-coded starting from memory location I;
+// I value doesn't change after the execution of this instruction.
+// VF is set to 1 if any screen pixels are flipped from set to unset when the sprite is drawn,
+// and to 0 if that doesn't happen
+func (vm *VM) _0xDXYN() {
+	// TODO: IMPLEMENT
 }
