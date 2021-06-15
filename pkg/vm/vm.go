@@ -125,23 +125,64 @@ func (vm *VM) emulateCycle() {
 			vm._0x00EE()
 			break
 		default:
+			// TODO: throw an error
 		}
 	case 0x1000: // 0x1NNN jumps to address nnn
-		vm._0x1000()
+		vm._0x1NNN()
 		break
 	case 0x2000 // 0x2NNN calls subroutine at NNN
-		vm._0x2000()
+		vm._0x2NNN()
 		break
 	case 0x3000:  // 0x3XNN skips the next instruction if vx equals nn
-		vm._0x3000()
+		vm._0x3XNN()
+		break
 	case 0x4000: // 0x4XNN skips the next instruction if vx doesn't equal NN
-		vm._0x4000()
+		vm._0x4XNN()
+		break
 	case 0x5000: // 0x5XY0 skips the next instruction if vx equals vy
-		vm._0x5000()
+		vm._0x5XY0()
+		break
 	case 0x6000: // 0x6XNN sets vx to nn
-		vm._0x6000()
+		vm._0x6XNN()
+		break
 	case 0x7000: // 0x7NN adds NN to vy
-		vm._0x7000()
+		vm._0x7NN()
+		break
+	case 0x8000:
+		switch vm.opcode & 0x000F {
+		case 0x0000: // 0x8XY0 sets vx to the value of vy
+			vm._0x8XY0()
+			break
+		case 0x0001: // 0x8XY1 sets vx to the value of "vx or vy" 
+			vm._0x8XY1()
+			break
+		case 0x0002: // 0x8XY2 sets vx to the value of "vx and vy" 
+			vm._0x8XY2()
+			break
+		case 0x0003: // 0x8XY3 sets vx to the value of "vx xor vy" 
+			vm._0x8XY3()
+			break
+		case 0x0004:
+			vm._0x8XY4() // 0x8XY4 adds vy to vx. vf is set to 1 when there's a carry
+			break
+		case 0x0005:
+			vm._0x8XY5() // 0x8XY5 vy is subtracted from vx. vf is set to 0 when there's a borrow
+			break
+		case 0x0006:
+			vm._0x8XY6() // 0x8XY6 shifts vx right by one. vf is set to the value of the least significant bit of vx before the shift
+			break
+		case 0x0007:
+			vm._0x8XY7() // 0x8XY7 sets vx to vy - vx. vf is set to 0 when there is a borrow
+			break
+		case 0x000E:
+			vm._0x8XYE() // 0x8XYE shifts vx left by one
+			break
+		}
+	case 0x9000: // 0x9XY0 skips the next instruction if VX doesn't equal VY
+		vm._0x9XY0()
+		break
+	case 0xA000: // 0xANNN sets I to the address NNN
+		vm._0xANNN()
 	}
 }
 
