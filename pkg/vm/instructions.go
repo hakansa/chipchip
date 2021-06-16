@@ -9,7 +9,7 @@ func (vm *VM) _0x00E0() {
 }
 
 // _0x00EE returns from subroutine
-func (vm *VM) _0xOOEE() {
+func (vm *VM) _0x00EE() {
 	vm.sp--                 // 16 levels of stach, decrease stack pointer to prevent overwrite
 	vm.pc = vm.stack[vm.sp] // put the stored return address from the stack back into the pc
 	vm.pc += 2              // increase pc
@@ -32,7 +32,7 @@ func (vm *VM) _0x3XNN() {
 
 	// decode x and nn
 	x := (vm.opcode & 0x0F00) >> 8
-	nn := vm.opcode & 0x00FF
+	nn := byte(vm.opcode & 0x00FF)
 
 	// skip next instruction
 	if vm.v[x] == nn {
@@ -49,7 +49,7 @@ func (vm *VM) _0x4XNN() {
 
 	// decode x and nn
 	x := (vm.opcode & 0x0F00) >> 8
-	nn := vm.opcode & 0x00FF
+	nn := byte(vm.opcode & 0x00FF)
 
 	// skip next instruction
 	if vm.v[x] != nn {
@@ -83,7 +83,7 @@ func (vm *VM) _0x6XNN() {
 
 	// decode x and nn
 	x := (vm.opcode & 0x0F00) >> 8
-	nn := vm.opcode & 0x00FF
+	nn := byte(vm.opcode & 0x00FF)
 
 	// set vx to nn
 	vm.v[x] = nn
@@ -97,7 +97,7 @@ func (vm *VM) _0x7XNN() {
 
 	// decode x and nn
 	x := (vm.opcode & 0x0F00) >> 8
-	nn := vm.opcode & 0x00FF
+	nn := byte(vm.opcode & 0x00FF)
 
 	// set vx to nn
 	vm.v[x] += nn
@@ -212,7 +212,7 @@ func (vm *VM) _0x8XY6() {
 	// y := (vm.opcode & 0x00F0) >> 4
 
 	// set vf
-	vm.v[0xF] = x & 0x1
+	vm.v[0xF] = vm.v[x] & 0x1
 	// shift vx
 	vm.v[x] >>= 1
 
@@ -251,7 +251,7 @@ func (vm *VM) _0x8XYE() {
 	//y := (vm.opcode & 0x00F0) >> 4
 
 	// set vf
-	vm.v[0xF] = x >> 7
+	vm.v[0xF] = vm.v[x] >> 7
 	// update vx
 	vm.v[x] <<= 1
 
@@ -290,17 +290,18 @@ func (vm *VM) _0xANNN() {
 func (vm *VM) _0xBNNN() {
 
 	// update the program counter
-	vm.pc = (vm.opcode & 0x0FFF) + vm.v[0]
+	vm.pc = (vm.opcode & 0x0FFF) + uint16(vm.v[0])
 }
 
 // _0xCXNN sets VX to a random number and NN
 func (vm *VM) _0xCXNN() {
 
-	// decode x
+	// decode x and nn
 	x := (vm.opcode & 0x0F00) >> 8
+	nn := byte(vm.opcode & 0x00FF)
 
 	// update vx
-	vm.v[x] = rand.Intn(0xFF) & (vm.opcode & 0x00FF)
+	vm.v[x] = byte(rand.Float32()*255) & nn
 
 	// continue to next instruction
 	vm.pc += 2
@@ -368,9 +369,9 @@ func (vm *VM) _0xFX0A() {
 
 	var keyPress bool
 
-	for i := 0; i < 16; i++ {
-		if vm.keypad[i] != 0 {
-			vm.v[x] = i
+	for i, k := range vm.keypad {
+		if k != 0 {
+			vm.v[x] = byte(i)
 			keyPress = true
 		}
 	}
@@ -410,21 +411,85 @@ func (vm *VM) _0xFX18() {
 	vm.pc += 2
 }
 
-// _0xFX1E 0xFX1E FX1E adds VX to I
+// _0xFX1E adds VX to I
 func (vm *VM) _0xFX1E() {
 
 	// decode x
 	x := (vm.opcode & 0x0F00) >> 8
 
 	// VF is set to 1 when range overflow (I+VX>0xFFF)
-	if vm.i+vm.v[x] > 0xFFF {
+	if vm.i+uint16(vm.v[x]) > 0xFFF {
 		vm.v[0xF] = 1
 	} else {
 		vm.v[0xF] = 0
 	}
 
 	// set i
-	vm.i += vm.v[x]
+	vm.i += uint16(vm.v[x])
+
+	// continue to next instruction
+	vm.pc += 2
+}
+
+// _0xFX29 sets I to the location of the sprite for the character in VX.
+// Characters 0-F (in hexadecimal) are represented by a 4x5 font
+func (vm *VM) _0xFX29() {
+
+	// decode x
+	x := (vm.opcode & 0x0F00) >> 8
+
+	// set i
+	vm.i = uint16(vm.v[x]) * 0x5
+
+	// continue to next instruction
+	vm.pc += 2
+}
+
+// _0xFX33 stores the Binary-coded decimal representation of VX
+// at the addresses I, I plus 1, and I plus 2
+func (vm *VM) _0xFX33() {
+
+	// decode x
+	x := (vm.opcode & 0x0F00) >> 8
+
+	// set i
+	vm.mem[vm.i] = vm.v[x] / 100
+	vm.mem[vm.i+1] = (vm.v[x] / 10) % 10
+	vm.mem[vm.i+2] = (vm.v[x] % 100) % 10
+
+	// continue to next instruction
+	vm.pc += 2
+}
+
+// _0xFX55 stores V0 to VX in memory starting at address I
+func (vm *VM) _0xFX55() {
+
+	// decode x
+	x := (vm.opcode & 0x0F00) >> 8
+
+	for i := uint16(0); i <= x; i++ {
+		vm.mem[vm.i+i] = vm.v[i]
+	}
+
+	// on the original interpreter, when the operation is done, I = I + X + 1.
+	vm.i += x + 1
+
+	// continue to next instruction
+	vm.pc += 2
+}
+
+// _0xFX65 fills V0 to VX with values from memory starting at address I
+func (vm *VM) _0xFX65() {
+
+	// decode x
+	x := (vm.opcode & 0x0F00) >> 8
+
+	for i := uint16(0); i <= x; i++ {
+		vm.v[i] = vm.mem[vm.i+i]
+	}
+
+	// on the original interpreter, when the operation is done, I = I + X + 1.
+	vm.i += x + 1
 
 	// continue to next instruction
 	vm.pc += 2

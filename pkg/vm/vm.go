@@ -1,5 +1,7 @@
 package vm
 
+import "fmt"
+
 const (
 	windowSize = 64 * 32
 )
@@ -111,7 +113,7 @@ func (vm *VM) Reset() {
 
 }
 
-func (vm *VM) emulateCycle() {
+func (vm *VM) emulateCycle() error {
 	// fetch opcode to vm.opcode
 	vm.fetchOpcode()
 
@@ -125,15 +127,15 @@ func (vm *VM) emulateCycle() {
 			vm._0x00EE()
 			break
 		default:
-			// TODO: throw an error
+			return fmt.Errorf("undefined opcode: %x", vm.opcode)
 		}
 	case 0x1000: // 0x1NNN jumps to address nnn
 		vm._0x1NNN()
 		break
-	case 0x2000 // 0x2NNN calls subroutine at NNN
+	case 0x2000: // 0x2NNN calls subroutine at NNN
 		vm._0x2NNN()
 		break
-	case 0x3000:  // 0x3XNN skips the next instruction if vx equals nn
+	case 0x3000: // 0x3XNN skips the next instruction if vx equals nn
 		vm._0x3XNN()
 		break
 	case 0x4000: // 0x4XNN skips the next instruction if vx doesn't equal NN
@@ -145,21 +147,21 @@ func (vm *VM) emulateCycle() {
 	case 0x6000: // 0x6XNN sets vx to nn
 		vm._0x6XNN()
 		break
-	case 0x7000: // 0x7NN adds NN to vy
-		vm._0x7NN()
+	case 0x7000: // 0x7XNN adds NN to vy
+		vm._0x7XNN()
 		break
 	case 0x8000:
 		switch vm.opcode & 0x000F {
 		case 0x0000: // 0x8XY0 sets vx to the value of vy
 			vm._0x8XY0()
 			break
-		case 0x0001: // 0x8XY1 sets vx to the value of "vx or vy" 
+		case 0x0001: // 0x8XY1 sets vx to the value of "vx or vy"
 			vm._0x8XY1()
 			break
-		case 0x0002: // 0x8XY2 sets vx to the value of "vx and vy" 
+		case 0x0002: // 0x8XY2 sets vx to the value of "vx and vy"
 			vm._0x8XY2()
 			break
-		case 0x0003: // 0x8XY3 sets vx to the value of "vx xor vy" 
+		case 0x0003: // 0x8XY3 sets vx to the value of "vx xor vy"
 			vm._0x8XY3()
 			break
 		case 0x0004:
@@ -177,6 +179,8 @@ func (vm *VM) emulateCycle() {
 		case 0x000E:
 			vm._0x8XYE() // 0x8XYE shifts vx left by one
 			break
+		default:
+			return fmt.Errorf("undefined opcode: %x", vm.opcode)
 		}
 	case 0x9000: // 0x9XY0 skips the next instruction if VX doesn't equal VY
 		vm._0x9XY0()
@@ -192,36 +196,56 @@ func (vm *VM) emulateCycle() {
 		break
 	case 0xD000: // 0xDXYN: Draws a sprite at coordinate (VX, VY) that has a width of 8 pixels and a height of N pixels
 		vm._0xDXYN()
-		break 
-	case 0xE000: 
+		break
+	case 0xE000:
 		switch vm.opcode & 0x00FF {
-			case 0x009E: // 0xEX9E skips the next instruction if the key stored in VX is pressed
-				vm._0xEX9E()
-				break
-			case 0x00A1:
-				vm._0xEXA1() // 0xEXA1 skips the next instruction if the key stored in VX isn't pressed
-				break
+		case 0x009E: // 0xEX9E skips the next instruction if the key stored in VX is pressed
+			vm._0xEX9E()
+			break
+		case 0x00A1:
+			vm._0xEXA1() // 0xEXA1 skips the next instruction if the key stored in VX isn't pressed
+			break
+		default:
+			return fmt.Errorf("undefined opcode: %x", vm.opcode)
 		}
 		break
 	case 0xF000:
-		case vm.opcode & 0x00FF {
-			case 0x0007: // 0xFX07 sets VX to the value of the delay timer
-				vm._0xFX07()
-				break
-			case 0x000A: // 0xFX0A a key press is awaited, and then stored in VX
-				vm._0xFX0A()	
-				break
-			case 0x0015: // 0xFX15 sets the delay timer to VX
-				vm._0xFX15()
-				break
-			case 0x0018: // 0xFX18 sets the sound timer to VX
-				vm._0xFX18()
-				break
-			case 0x001E: // 0xFX1E FX1E adds VX to I
-				vm._0xFX1E()
-				break
+		switch vm.opcode & 0x00FF {
+		case 0x0007: // 0xFX07 sets VX to the value of the delay timer
+			vm._0xFX07()
+			break
+		case 0x000A: // 0xFX0A a key press is awaited, and then stored in VX
+			vm._0xFX0A()
+			break
+		case 0x0015: // 0xFX15 sets the delay timer to VX
+			vm._0xFX15()
+			break
+		case 0x0018: // 0xFX18 sets the sound timer to VX
+			vm._0xFX18()
+			break
+		case 0x001E: // 0xFX1E FX1E adds VX to I
+			vm._0xFX1E()
+			break
+		case 0x0029: // 0xFX29 sets I to the location of the sprite for the character in VX
+			vm._0xFX29()
+			break
+		case 0x0033: // 0xFX33 stores the Binary-coded decimal representation of VX at the addresses I, I plus 1, and I plus 2
+			vm._0xFX33()
+			break
+		case 0x0055: // 0xFX55 stores V0 to VX in memory starting at address I
+			vm._0xFX55()
+			break
+		case 0x0065: // 0xFX55 fills V0 to VX with values from memory starting at address I
+			vm._0xFX65()
+			break
+		default:
+			return fmt.Errorf("undefined opcode: %x", vm.opcode)
 		}
+	default:
+		return fmt.Errorf("undefined opcode: %x", vm.opcode)
 	}
+
+	return fmt.Errorf("undefined opcode: %x", vm.opcode)
 }
 
 func (vm *VM) fetchOpcode() {
