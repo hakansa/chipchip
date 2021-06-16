@@ -193,6 +193,34 @@ func (vm *VM) emulateCycle() {
 	case 0xD000: // 0xDXYN: Draws a sprite at coordinate (VX, VY) that has a width of 8 pixels and a height of N pixels
 		vm._0xDXYN()
 		break 
+	case 0xE000: 
+		switch vm.opcode & 0x00FF {
+			case 0x009E: // 0xEX9E skips the next instruction if the key stored in VX is pressed
+				vm._0xEX9E()
+				break
+			case 0x00A1:
+				vm._0xEXA1() // 0xEXA1 skips the next instruction if the key stored in VX isn't pressed
+				break
+		}
+		break
+	case 0xF000:
+		case vm.opcode & 0x00FF {
+			case 0x0007: // 0xFX07 sets VX to the value of the delay timer
+				vm._0xFX07()
+				break
+			case 0x000A: // 0xFX0A a key press is awaited, and then stored in VX
+				vm._0xFX0A()	
+				break
+			case 0x0015: // 0xFX15 sets the delay timer to VX
+				vm._0xFX15()
+				break
+			case 0x0018: // 0xFX18 sets the sound timer to VX
+				vm._0xFX18()
+				break
+			case 0x001E: // 0xFX1E FX1E adds VX to I
+				vm._0xFX1E()
+				break
+		}
 	}
 }
 

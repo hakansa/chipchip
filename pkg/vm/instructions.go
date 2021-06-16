@@ -314,3 +314,118 @@ func (vm *VM) _0xCXNN() {
 func (vm *VM) _0xDXYN() {
 	// TODO: IMPLEMENT
 }
+
+// _0xEX9E skips the next instruction if the key stored in VX is pressed
+func (vm *VM) _0xEX9E() {
+
+	// decode x
+	x := (vm.opcode & 0x0F00) >> 8
+
+	// skip next instruction
+	if vm.keypad[vm.v[x]] != 0 {
+		vm.pc += 4
+		return
+	}
+
+	// continue to next instruction
+	vm.pc += 2
+}
+
+// _0xEXA1 skips the next instruction if the key stored in VX isn't pressed
+func (vm *VM) _0xEXA1() {
+
+	// decode x
+	x := (vm.opcode & 0x0F00) >> 8
+
+	// skip next instruction
+	if vm.keypad[vm.v[x]] == 0 {
+		vm.pc += 4
+		return
+	}
+
+	// continue to next instruction
+	vm.pc += 2
+}
+
+// _0xFX07 sets VX to the value of the delay timer
+func (vm *VM) _0xFX07() {
+
+	// decode x
+	x := (vm.opcode & 0x0F00) >> 8
+
+	// set vx
+	vm.v[x] = vm.delayTimer
+
+	// continue to next instruction
+	vm.pc += 2
+}
+
+// _0xFX0A a key press is awaited, and then stored in VX
+func (vm *VM) _0xFX0A() {
+
+	// decode x
+	x := (vm.opcode & 0x0F00) >> 8
+
+	var keyPress bool
+
+	for i := 0; i < 16; i++ {
+		if vm.keypad[i] != 0 {
+			vm.v[x] = i
+			keyPress = true
+		}
+	}
+
+	// if we didn't received a keypress, skip this cycle and try again.
+	if !keyPress {
+		return
+	}
+
+	// continue to next instruction
+	vm.pc += 2
+}
+
+// _0xFX15 sets the delay timer to VX
+func (vm *VM) _0xFX15() {
+
+	// decode x
+	x := (vm.opcode & 0x0F00) >> 8
+
+	// set delay timer
+	vm.delayTimer = vm.v[x]
+
+	// continue to next instruction
+	vm.pc += 2
+}
+
+// _0xFX18 sets the sound timer to VX
+func (vm *VM) _0xFX18() {
+
+	// decode x
+	x := (vm.opcode & 0x0F00) >> 8
+
+	// set sound timer
+	vm.soundTimer = vm.v[x]
+
+	// continue to next instruction
+	vm.pc += 2
+}
+
+// _0xFX1E 0xFX1E FX1E adds VX to I
+func (vm *VM) _0xFX1E() {
+
+	// decode x
+	x := (vm.opcode & 0x0F00) >> 8
+
+	// VF is set to 1 when range overflow (I+VX>0xFFF)
+	if vm.i+vm.v[x] > 0xFFF {
+		vm.v[0xF] = 1
+	} else {
+		vm.v[0xF] = 0
+	}
+
+	// set i
+	vm.i += vm.v[x]
+
+	// continue to next instruction
+	vm.pc += 2
+}
