@@ -117,6 +117,36 @@ func (vm *VM) emulateCycle() error {
 	// fetch opcode to vm.opcode
 	vm.fetchOpcode()
 
+	// run opcode
+	if err := vm.runOpcode(); err != nil {
+		return fmt.Errorf("error running opcode: %v", err)
+	}
+
+	// update timers
+	vm.updateDelayTimer()
+	vm.updateSoundTimer()
+
+	return nil
+}
+
+func (vm *VM) updateDelayTimer() {
+	if vm.delayTimer > 0 {
+		vm.delayTimer--
+	}
+}
+
+func (vm *VM) updateSoundTimer() {
+	if vm.soundTimer > 0 {
+		if vm.soundTimer == 1 {
+			// TODO: BEEEEEEP!!
+		}
+
+		vm.soundTimer--
+	}
+}
+
+func (vm *VM) runOpcode() error {
+
 	switch vm.opcode & 0xF000 {
 	case 0x0000:
 		switch vm.opcode & 0x000F {
@@ -245,7 +275,7 @@ func (vm *VM) emulateCycle() error {
 		return fmt.Errorf("undefined opcode: %x", vm.opcode)
 	}
 
-	return fmt.Errorf("undefined opcode: %x", vm.opcode)
+	return nil
 }
 
 func (vm *VM) fetchOpcode() {
